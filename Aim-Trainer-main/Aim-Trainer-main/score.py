@@ -9,4 +9,6 @@ class Score(object):
     
     def draw(self):
         score = font.render(str(self.score), 1, WHITE)
-        WIN.blit(score, (0, 0))
+        restart1 = font.render(str("Press r to restart"), 1, WHITE)
+        WIN.blit(score, (25, 25))
+        WIN.blit (restart1, (850, 650))
