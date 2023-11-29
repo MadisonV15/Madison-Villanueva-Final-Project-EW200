@@ -10,13 +10,13 @@ sandstorm = pygame.mixer.Sound("../assets/sandstorm.mp3")
 pygame.mixer.Sound.play(sandstorm)
 blaster = pygame.mixer.Sound("../assets/blaster.mp3")
 scream = pygame.mixer.Sound("../assets/scream.mp3")
-l
+
 # OBJECTS
 targets = [t.Target(SPEED, TARGET_RADIUS)]
 score = s.Score()
+SPEED = 0.3
 
 def reset_game():
-    global SPEED
     targets.clear()
     targets.append(t.Target(SPEED, TARGET_RADIUS))
     score.score = 0
@@ -44,14 +44,6 @@ def handle_main_menu_input():
                 return True
     return False
 
-def game_over():
-    # Draw the game over screen on the screen
-    game_over_text = font.render("Game Over", True, WHITE)
-    restart_text = font.render("Press R to Restart", True, WHITE)
-    WIN.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - 50))
-    WIN.blit(restart_text, (WIDTH // 2 - restart_text.get_width() // 2, HEIGHT // 2 + 50))
-    pygame.display.update()
-
 def handle_target_clicks(pos):
     global SPEED
     for target in targets:
@@ -61,22 +53,20 @@ def handle_target_clicks(pos):
             targets.append(t.Target(SPEED, TARGET_RADIUS))
             score.increase()
             pygame.mixer.Sound.play(blaster)
+        SPEED = max(SPEED, 0.3)
+
 
 def draw_targets():
     for target in targets:
         target.draw()
 
 def shrink_targets():
-    game_over = False  # Initialize game over condition
+    SPEED = 0.3
     for target in targets:
         if not target.pressed:
             target.shrink(targets)
-            pygame.mixer.Sound.play(scream)
-            game_over = True  # Set game over condition to True if any target is not pressed
         else:
-            target.radius -= PRESSED_SPEED
-    if game_over:
-        game_over()
+            SPEED -= ACCELERATION
 
 def draw_back():
     WIN.blit(BACKGROUND_IMAGE, (0,0))
