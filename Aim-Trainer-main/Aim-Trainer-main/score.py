@@ -10,5 +10,8 @@ class Score(object):
     def draw(self):
         score = font.render(str(self.score), 1, WHITE)
         restart1 = font.render(str("Press r to restart"), 1, WHITE)
-        WIN.blit(score, (25, 25))
+        # high_score_text = font.render("High Score: " + str(high_score), True, RED)
+        WIN.blit(score, (50, 25))
         WIN.blit (restart1, (850, 650))
+        # WIN.blit(high_score_text,
+        #          (WIDTH // 2 - high_score_text.get_width() // 2, HEIGHT // 2 + 50))  # Display high score

@@ -7,7 +7,9 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 PURPLE = (255, 0, 255)
 RED = (255, 0, 0)
-BLUE = (0, 0, 255)
+YELLOW = (255, 232, 31)
+GREEN = (47, 249, 36)
+BLUE = (46,103,248)
 
 WIDTH = 1300
 HEIGHT = 750
@@ -25,5 +27,5 @@ font = pygame.font.SysFont("Comicsans", 50)
 BACKGROUND_IMAGE = pygame.image.load("../assets/space.jpg")
 BACKGROUND_IMAGE = pygame.transform.scale(BACKGROUND_IMAGE, (WIDTH, HEIGHT))
 
-TARGET_COLOR = RED
+TARGET_COLOR = GREEN
 PRESSED_COLOR = BLUE
