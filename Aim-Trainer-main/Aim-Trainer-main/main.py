@@ -2,6 +2,8 @@ import pygame
 import target as t
 import score as s
 from constants import *
+import pickle
+import os
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -13,17 +15,53 @@ blaster = pygame.mixer.Sound("../assets/blaster.mp3")
 scream = pygame.mixer.Sound("../assets/scream.mp3")
 
 # OBJECTS
-SPEED = 0.3  # Define SPEED before using it in the targets list
+SPEED = 0.3
 targets = [t.Target(SPEED, TARGET_RADIUS)]
 score = s.Score()
 high_score = 0
-elapsed_time = 0  # Add elapsed_time variable
+start_time = 0  # Set the start time to zero
 
-def draw_clock(elapsed_time):
-    #global elapsed_time
-    # elapsed_time = pygame.time.get_ticks() // 1000
+def save_game():
+    print("Saving game...")
+    game_state = {
+        'targets': targets,
+        'score': score.score,
+        'high_score': high_score,
+        'start_time': start_time
+    }
+    directory = 'saved_games'
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+    file_path = os.path.join(directory, 'game_state.pickle')
+    if os.access(file_path, os.W_OK):
+        with open(file_path, 'wb') as file:
+            pickle.dump(game_state, file)
+    else:
+        print("Unable to save game state. Check file permissions.")
+
+def load_game():
+    print("Loading game...")
+    global targets, score, high_score, start_time
+    file_path = os.path.join('saved_games', 'game_state.pickle')
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as file:
+            game_state = pickle.load(file)
+        targets = game_state['targets']
+        score.score = game_state['score']
+        high_score = game_state['high_score']
+        start_time = game_state['start_time']
+    else:
+        # Handle the case where the file is not found
+        print("Game state file not found. Starting a new game.")
+        targets = [t.Target(SPEED, TARGET_RADIUS)]
+        score = s.Score()
+        high_score = 0
+        start_time = 0
+
+def draw_clock():
+    elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
     time_text = font.render("TIME:" + str(elapsed_time), True, WHITE)
-    WIN.blit(time_text, (WIDTH - time_text.get_width() - 50, 50))  # Adjust the position as needed
+    WIN.blit(time_text, (WIDTH - time_text.get_width() - 50, 50))
 
 def draw_main_menu():
     # Draw the main menu on the screen
@@ -42,11 +80,20 @@ def handle_main_menu_input():
             return False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RETURN:
+                if not load_saved_game():
+                    start_game()
                 return True
             if event.key == pygame.K_r:
                 reset_game()
                 return True
     return False
+
+def load_saved_game():
+    try:
+        load_game()
+        return True
+    except FileNotFoundError:
+        return False
 
 def handle_target_clicks(pos):
     global SPEED
@@ -71,24 +118,33 @@ def shrink_targets():
         else:
             SPEED -= ACCELERATION
 
-def draw_back(elapsed_time):
+def draw_back():
     WIN.blit(BACKGROUND_IMAGE, (0,0))
     draw_targets()
     score.draw()
     high_score_text = font.render("High Score: " + str(high_score), True, WHITE)  # Add high score text
     WIN.blit(high_score_text, (50, 100))  # Display high score
-    draw_clock(elapsed_time)
+    draw_clock()
     pygame.display.update()
 
 
 def reset_game():
-    global high_score, elapsed_time
-    elapsed_time = 0  # Reset elapsed time to 0
+    global high_score, start_time
+    elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
     if score.score > high_score:
         high_score = score.score
     targets.clear()
     targets.append(t.Target(SPEED, TARGET_RADIUS))
     score.score = 0
+    reset_clock()  # Reset the clock
+
+def reset_clock():
+    global start_time
+    start_time = pygame.time.get_ticks()  # Set the start time to the current time
+
+def start_game():
+    global start_time
+    start_time = pygame.time.get_ticks()  # Set the start time to the current time
 
 def main():
     run = True
@@ -96,7 +152,7 @@ def main():
     in_main_menu = True
 
     while run:
-        clock.tick(60)  # Move clock.tick(60) inside the game loop
+        clock.tick(60)
 
         if in_main_menu:
             draw_main_menu()
@@ -104,7 +160,7 @@ def main():
             continue
         elapsed_time = pygame.time.get_ticks() // 1000
         shrink_targets()
-        draw_back(elapsed_time)
+        draw_back()
         #
 
         # Check if all targets have been missed
@@ -137,3 +193,4 @@ def main():
     pygame.quit()
 
 main()
+
