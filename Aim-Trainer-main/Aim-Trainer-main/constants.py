@@ -18,7 +18,7 @@ pygame.display.set_caption("Target Practice")
 BACKGROUND_COLOR = BLACK
 TARGET_RADIUS = 75
 RING_WIDTH = 5
-SPEED = 0.3
+SPEED = 0.25
 ACCELERATION = 0.0175
 PRESSED_SPEED = 1
 

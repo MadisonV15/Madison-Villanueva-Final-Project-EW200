@@ -15,11 +15,11 @@ blaster = pygame.mixer.Sound("../assets/blaster.mp3")
 scream = pygame.mixer.Sound("../assets/scream.mp3")
 
 # OBJECTS
-SPEED = 0.3
 targets = [t.Target(SPEED, TARGET_RADIUS)]
 score = s.Score()
 high_score = 0
-start_time = 0  # Set the start time to zero
+start_time = 0
+speed_increase_timer = 0
 
 def save_game():
     print("Saving game...")
@@ -80,7 +80,7 @@ def handle_main_menu_input():
             return False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RETURN:
-                if not load_saved_game():
+                if not load_game():
                     start_game()
                 return True
             if event.key == pygame.K_r:
@@ -88,15 +88,7 @@ def handle_main_menu_input():
                 return True
     return False
 
-def load_saved_game():
-    try:
-        load_game()
-        return True
-    except FileNotFoundError:
-        return False
-
 def handle_target_clicks(pos):
-    global SPEED
     for target in targets:
         if target.isOver(pos):
             target.pressed = True
@@ -104,29 +96,24 @@ def handle_target_clicks(pos):
             targets.append(t.Target(SPEED, TARGET_RADIUS))
             score.increase()
             pygame.mixer.Sound.play(blaster)
-    SPEED = max(SPEED, 0.3)  # Move outside the for loop
 
 def draw_targets():
     for target in targets:
         target.draw()
 
 def shrink_targets():
-    SPEED = 0.3
     for target in targets:
         if not target.pressed:
             target.shrink(targets)
-        else:
-            SPEED -= ACCELERATION
 
 def draw_back():
     WIN.blit(BACKGROUND_IMAGE, (0,0))
     draw_targets()
     score.draw()
-    high_score_text = font.render("High Score: " + str(high_score), True, WHITE)  # Add high score text
-    WIN.blit(high_score_text, (50, 100))  # Display high score
+    high_score_text = font.render("High Score: " + str(high_score), True, WHITE)
+    WIN.blit(high_score_text, (50, 100))
     draw_clock()
     pygame.display.update()
-
 
 def reset_game():
     global high_score, start_time
@@ -136,43 +123,53 @@ def reset_game():
     targets.clear()
     targets.append(t.Target(SPEED, TARGET_RADIUS))
     score.score = 0
-    reset_clock()  # Reset the clock
+    reset_clock()
 
 def reset_clock():
     global start_time
-    start_time = pygame.time.get_ticks()  # Set the start time to the current time
+    start_time = pygame.time.get_ticks()
 
 def start_game():
     global start_time
-    start_time = pygame.time.get_ticks()  # Set the start time to the current time
+    start_time = pygame.time.get_ticks()
 
 def main():
+    global speed_increase_timer  # Mark the variable as global
+
     run = True
-    clock = pygame.time.Clock()
     in_main_menu = True
+    global SPEED
 
     while run:
         clock.tick(60)
+        speed_increase_timer += clock.get_time()
+
+        if speed_increase_timer >= 10000:
+            SPEED += 0.25
+            speed_increase_timer = 0
+
+        if speed_increase_timer >= 20000:
+            SPEED += 0.25
+            speed_increase_timer = 0
 
         if in_main_menu:
             draw_main_menu()
             in_main_menu = not handle_main_menu_input()
             continue
+
         elapsed_time = pygame.time.get_ticks() // 1000
         shrink_targets()
         draw_back()
-        #
 
-        # Check if all targets have been missed
         if all(target.pressed for target in targets):
-            # Game over
+            pygame.mixer.Sound.play(scream)
             game_over_text = font.render("Game Over", True, RED)
             game_over_text1 = font.render("Press q to quit", True, RED)
             WIN.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 4))
             WIN.blit(game_over_text1, (WIDTH // 2 - game_over_text1.get_width() // 2, HEIGHT // 2))
             elapsed_time = 0
             pygame.display.update()
-            pygame.time.wait(2000)  # Wait for 2 seconds
+            pygame.time.wait(2000)
             reset_game()
 
         for event in pygame.event.get():
@@ -184,13 +181,10 @@ def main():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
-                    # Restart the game
                     reset_game()
                 elif event.key == pygame.K_q:
-                    # Quit the game
                     run = False
 
     pygame.quit()
 
 main()
-
