@@ -2,14 +2,13 @@ import pygame
 import target as t
 import score as s
 from constants import *
-import pickle
 import os
 
 pygame.init()
 clock = pygame.time.Clock()
 
 # SOUNDS
-sandstorm = pygame.mixer.Sound("../assets/sandstorm.mp3")
+sandstorm = pygame.mixer.Sound("../assets/trap.mp3")
 pygame.mixer.Sound.play(sandstorm)
 blaster = pygame.mixer.Sound("../assets/blaster.mp3")
 scream = pygame.mixer.Sound("../assets/scream.mp3")
@@ -21,42 +20,16 @@ high_score = 0
 start_time = 0
 speed_increase_timer = 0
 
-def save_game():
-    print("Saving game...")
-    game_state = {
-        'targets': targets,
-        'score': score.score,
-        'high_score': high_score,
-        'start_time': start_time
-    }
-    directory = 'saved_games'
-    if not os.path.isdir(directory):
-        os.makedirs(directory)
-    file_path = os.path.join(directory, 'game_state.pickle')
-    if os.access(file_path, os.W_OK):
-        with open(file_path, 'wb') as file:
-            pickle.dump(game_state, file)
-    else:
-        print("Unable to save game state. Check file permissions.")
+def save_high_score(score):
+    with open("high_score.txt", "w") as file:
+        file.write(str(score))
 
-def load_game():
-    print("Loading game...")
-    global targets, score, high_score, start_time
-    file_path = os.path.join('saved_games', 'game_state.pickle')
-    if os.path.exists(file_path):
-        with open(file_path, 'rb') as file:
-            game_state = pickle.load(file)
-        targets = game_state['targets']
-        score.score = game_state['score']
-        high_score = game_state['high_score']
-        start_time = game_state['start_time']
-    else:
-        # Handle the case where the file is not found
-        print("Game state file not found. Starting a new game.")
-        targets = [t.Target(SPEED, TARGET_RADIUS)]
-        score = s.Score()
-        high_score = 0
-        start_time = 0
+def load_high_score():
+    try:
+        with open("high_score.txt", "r") as file:
+            return int(file.read())
+    except FileNotFoundError:
+        return 0
 
 def draw_clock():
     elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
@@ -79,11 +52,10 @@ def handle_main_menu_input():
             pygame.quit()
             return False
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RETURN:
-                if not load_game():
-                    start_game()
+            if event.key == pygame.K_l:
+                start_game()
                 return True
-            if event.key == pygame.K_r:
+            if event.key == pygame.K_RETURN:
                 reset_game()
                 return True
     return False
@@ -120,6 +92,7 @@ def reset_game():
     elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
     if score.score > high_score:
         high_score = score.score
+        save_high_score(high_score)
     targets.clear()
     targets.append(t.Target(SPEED, TARGET_RADIUS))
     score.score = 0
@@ -134,22 +107,24 @@ def start_game():
     start_time = pygame.time.get_ticks()
 
 def main():
-    global speed_increase_timer  # Mark the variable as global
+    global speed_increase_timer, high_score  # Mark the variables as global
 
     run = True
     in_main_menu = True
     global SPEED
+
+    high_score = load_high_score()  # Load the high score from file
 
     while run:
         clock.tick(60)
         speed_increase_timer += clock.get_time()
 
         if speed_increase_timer >= 10000:
-            SPEED += 0.25
+            SPEED += 0.15
             speed_increase_timer = 0
 
         if speed_increase_timer >= 20000:
-            SPEED += 0.25
+            SPEED += 0.15
             speed_increase_timer = 0
 
         if in_main_menu:
